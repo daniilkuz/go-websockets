@@ -25,6 +25,13 @@ func (s *Server) handleWS(ws *websocket.Conn) {
 	s.readLoop(ws)
 }
 
+// func (s *Server) handleWSOrderbook(ws *websocket.Conn) {
+// 	fmt.Println("new incoming connection to orderbook: ", ws.RemoteAddr())
+// 	for {
+// 		payload := fmt.Sprintf("orderbook")
+// 	}
+// }
+
 func (s *Server) readLoop(ws *websocket.Conn) {
 	buf := make([]byte, 1024)
 	for {
@@ -37,8 +44,19 @@ func (s *Server) readLoop(ws *websocket.Conn) {
 			continue
 		}
 		msg := buf[:n]
-		fmt.Println(string(msg))
-		ws.Write([]byte("Thank for the message"))
+		s.broadcast(msg)
+		// fmt.Println(string(msg))
+		// ws.Write([]byte("Thank for the message"))
+	}
+}
+
+func (s *Server) broadcast(b []byte) {
+	for ws := range s.conns {
+		go func(ws *websocket.Conn) {
+			if _, err := ws.Write(b); err != nil {
+				fmt.Println("write error: ", err)
+			}
+		}(ws)
 	}
 }
 
